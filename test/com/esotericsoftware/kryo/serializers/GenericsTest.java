@@ -19,6 +19,7 @@
 
 package com.esotericsoftware.kryo.serializers;
 
+import com.carrotsearch.sizeof.RamUsageEstimator;
 import com.esotericsoftware.kryo.KryoTestCase;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -57,9 +58,14 @@ public class GenericsTest extends KryoTestCase {
 			new SerializableObjectFoo("three"));
 		BaseGeneric<SerializableObjectFoo> bg1 = new BaseGeneric(list);
 
-		roundTrip(117, bg1);
+		System.out.println(RamUsageEstimator.humanSizeOf(bg1));
+		BaseGeneric<SerializableObjectFoo> bg2 = roundTrip(117, bg1);
+		System.out.println(bg2.equals(bg1));
 	}
 
+	/**
+     * 与上面结果一致的原因是注册后的cachedFields.fields内容一致，尽管继承了很多类但是继承关系的类里没有字段
+     * */
 	@Test
 	public void testNonGenericClassWithGenericSuperclass () {
 		kryo.setReferences(true);

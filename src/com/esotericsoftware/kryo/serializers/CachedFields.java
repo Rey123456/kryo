@@ -69,6 +69,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 
+/**
+ * 存储注册类下的各个字段相关信息
+ * */
 /** @author Nathan Sweet */
 class CachedFields implements Comparator<CachedField> {
 	static final CachedField[] emptyCachedFields = new CachedField[0];

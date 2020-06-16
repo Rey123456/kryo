@@ -413,7 +413,7 @@ public class Input extends InputStream implements Poolable {
 			int p = position;
 			b = buffer[p++];
 			result |= (b & 0x7F) << 7;
-			if ((b & 0x80) != 0) {
+			if ((b & 0x80) != 0) {//最高位为1，表示需要继续读
 				b = buffer[p++];
 				result |= (b & 0x7F) << 14;
 				if ((b & 0x80) != 0) {
@@ -515,7 +515,7 @@ public class Input extends InputStream implements Poolable {
 		int b = buffer[position++];
 		int result = b & 0x3F;
 		if ((b & 0x40) != 0) {
-			if (position == limit) require(1);
+			if (position == limit) require(1);//判断下一子节是否可读
 			byte[] buffer = this.buffer;
 			b = buffer[position++];
 			result |= (b & 0x7F) << 6;
@@ -774,15 +774,15 @@ public class Input extends InputStream implements Poolable {
 	 * @return May be null. */
 	public String readString () {
 		if (!readVarIntFlag()) return readAsciiString(); // ASCII.
-		// Null, empty, or UTF8.
-		int charCount = readVarIntFlag(true);
+		// Null, empty, or UTF8. 10000000(null);10000001(empty);
+		int charCount = readVarIntFlag(true);//charcount写入的时候+1了
 		switch (charCount) {
 		case 0:
 			return null;
 		case 1:
 			return "";
 		}
-		charCount--;
+		charCount--;//字符串实际长度
 		readUtf8Chars(charCount);
 		return new String(chars, 0, charCount);
 	}

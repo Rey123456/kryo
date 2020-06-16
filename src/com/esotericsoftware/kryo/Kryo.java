@@ -130,14 +130,16 @@ public class Kryo implements Poolable {
 	static private final int REF = -1;
 	static private final int NO_REF = -2;
 
+	//序列化
 	private SerializerFactory defaultSerializer = new FieldSerializerFactory();
-	private final ArrayList<DefaultSerializerEntry> defaultSerializers = new ArrayList(53);
+	private final ArrayList<DefaultSerializerEntry> defaultSerializers = new ArrayList(53); //存储支持的一些序列化方式
 	private final int lowPriorityDefaultSerializerCount;
 
-	private final ClassResolver classResolver;
+	//类加载器
+	private final ClassResolver classResolver; //负责类的注册、根据类标识序列化、根据字节码得到类标识
 	private int nextRegisterID;
 	private ClassLoader classLoader = getClass().getClassLoader();
-	private InstantiatorStrategy strategy = new DefaultInstantiatorStrategy();
+	private InstantiatorStrategy strategy = new DefaultInstantiatorStrategy();//初始化策略，反序列化
 	private boolean registrationRequired = true;
 	private boolean warnUnregisteredClasses;
 
@@ -146,7 +148,8 @@ public class Kryo implements Poolable {
 	private volatile Thread thread;
 	private ObjectMap context, graphContext;
 
-	private ReferenceResolver referenceResolver;
+	//循环引用
+	private ReferenceResolver referenceResolver; //当允许引用时，该类用于跟踪已经读写的对象，为写对象提供ID，根据ID读取对象。
 	private final IntArray readReferenceIds = new IntArray(0);
 	private boolean references, copyReferences = true;
 	private Object readObject;
@@ -155,7 +158,7 @@ public class Kryo implements Poolable {
 	private boolean copyShallow;
 	private IdentityMap originalToCopy;
 	private Object needsCopyReference;
-	private final Generics generics = new Generics(this);
+	private final Generics generics = new Generics(this); //范型对象图
 
 	/** Creates a new Kryo with a {@link DefaultClassResolver} and references disabled. */
 	public Kryo () {
@@ -542,7 +545,7 @@ public class Kryo implements Poolable {
 		}
 	}
 
-	/** Writes an object using the registered serializer. */
+	/** Writes an object using the registered serializer. */ //直接写内容
 	public void writeObject (Output output, Object object) {
 		if (output == null) throw new IllegalArgumentException("output cannot be null.");
 		if (object == null) throw new IllegalArgumentException("object cannot be null.");
@@ -993,6 +996,7 @@ public class Kryo implements Poolable {
 
 	// --- Utility ---
 
+	//开始序列化， 将dept自增，表示当前深度，因为在序列化一个对象时，该方法有可能会被递归调用，每递归调用增加1，一次调用结束后在finally字句中自减
 	private void beginObject () {
 		if (DEBUG) {
 			if (depth == 0)

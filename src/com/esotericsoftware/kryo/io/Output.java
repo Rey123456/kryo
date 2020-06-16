@@ -657,18 +657,19 @@ public class Output extends OutputStream implements AutoCloseable, Poolable {
 		if (charCount > 1 && charCount <= 32) {
 			for (int i = 0; i < charCount; i++)
 				if (value.charAt(i) > 127) break outer;
-			if (capacity - position < charCount)
+			if (capacity - position < charCount) //容量不足
 				writeAscii_slow(value, charCount);
 			else {
-				value.getBytes(0, charCount, buffer, position);
+				value.getBytes(0, charCount, buffer, position); //都是ascii且buffer ok，直接copy
 				position += charCount;
 			}
-			buffer[position - 1] |= 0x80;
+			buffer[position - 1] |= 0x80; //用高位1表示结束
 			return;
 		}
+		//当字符串长度< 32时，直接copy；否则先写长度，用长度表示结束
 		writeVarIntFlag(true, charCount + 1, true);
 		int charIndex = 0;
-		if (capacity - position >= charCount) {
+		if (capacity - position >= charCount) {// 如果当前缓存区有足够的空间，先尝试将字符串中单字节数据写入到 buffer 中，碰到第一个非单字节字符时，结束
 			// Try to write 7 bit chars.
 			byte[] buffer = this.buffer;
 			int p = position;
@@ -721,17 +722,17 @@ public class Output extends OutputStream implements AutoCloseable, Poolable {
 		for (; charIndex < charCount; charIndex++) {
 			if (position == capacity) require(Math.min(capacity, charCount - charIndex));
 			int c = value.charAt(charIndex);
-			if (c <= 0x007F)
+			if (c <= 0x007F)//0000 0000 0111 1111
 				buffer[position++] = (byte)c;
-			else if (c > 0x07FF) {
-				buffer[position++] = (byte)(0xE0 | c >> 12 & 0x0F);
+			else if (c > 0x07FF) {//0000 0111 1111 1111 字符编码的值，不会超过 0XFFFF,也就是两个字节(正好与java unicode编码吻合)
+				buffer[position++] = (byte)(0xE0 | c >> 12 & 0x0F);//0xE0:1110 0000 ; 0x0F: 0000 1111; 高位一定是1110，低位是内容; 根据 0xE0 作为存储该字符需要 3 个字节的依据
 				require(2);
-				buffer[position++] = (byte)(0x80 | c >> 6 & 0x3F);
-				buffer[position++] = (byte)(0x80 | c & 0x3F);
+				buffer[position++] = (byte)(0x80 | c >> 6 & 0x3F);//第一位表示是utf-8，第二位表示有无下一子节(0表示有)；0x3F：0011 1111
+				buffer[position++] = (byte)(0x80 | c & 0x3F);//低6位的存储
 			} else {
-				buffer[position++] = (byte)(0xC0 | c >> 6 & 0x1F);
+				buffer[position++] = (byte)(0xC0 | c >> 6 & 0x1F);//0xC0：1100 0000 ; 0x1F:0001 1111
 				if (position == capacity) require(1);
-				buffer[position++] = (byte)(0x80 | c & 0x3F);
+				buffer[position++] = (byte)(0x80 | c & 0x3F); //低6位的存储
 			}
 		}
 	}

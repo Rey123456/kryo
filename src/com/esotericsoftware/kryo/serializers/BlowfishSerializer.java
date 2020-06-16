@@ -33,6 +33,7 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.spec.SecretKeySpec;
 
 /** Encrypts data using the blowfish cipher.
+ * Blowfish是一个64位分组及可变密钥长度的分组密码算法，可用来加密64Bit长度的字符串
  * @author Nathan Sweet */
 public class BlowfishSerializer extends Serializer {
 	private final Serializer serializer;

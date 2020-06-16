@@ -180,21 +180,21 @@ public class DefaultSerializers {
 			}
 			// fast-path optimizations for BigInteger.ZERO constant
 			if (object == BigInteger.ZERO) {
-				output.writeByte(2);
+				output.writeByte(2);//表示长度
 				output.writeByte(0);
 				return;
 			}
 			// default behaviour
 			byte[] bytes = object.toByteArray();
-			output.writeVarInt(bytes.length + 1, true);
+			output.writeVarInt(bytes.length + 1, true);//写入长度
 			output.writeBytes(bytes);
 		}
 
 		public BigInteger read (Kryo kryo, Input input, Class<? extends BigInteger> type) {
 			int length = input.readVarInt(true);
 			if (length == NULL) return null;
-			byte[] bytes = input.readBytes(length - 1);
-			if (type != BigInteger.class && type != null) {
+			byte[] bytes = input.readBytes(length - 1);//读入bytes
+			if (type != BigInteger.class && type != null) {//当类型不是BigIntger，而是其子类时，利用反射获取其关于bytes的构造函数
 				// Use reflection for subclasses.
 				try {
 					Constructor<? extends BigInteger> constructor = type.getConstructor(byte[].class);
@@ -284,7 +284,7 @@ public class DefaultSerializers {
 
 		public void write (Kryo kryo, Output output, Class type) {
 			kryo.writeClass(output, type);
-			if (type != null && (type.isPrimitive() || isWrapperClass(type))) output.writeBoolean(type.isPrimitive());
+			if (type != null && (type.isPrimitive() || isWrapperClass(type))) output.writeBoolean(type.isPrimitive());//判断是否是基本类型或包装类型
 		}
 
 		public Class read (Kryo kryo, Input input, Class<? extends Class> ignored) {

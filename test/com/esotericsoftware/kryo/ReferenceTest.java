@@ -26,10 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.MapSerializer;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -46,6 +43,43 @@ public class ReferenceTest extends KryoTestCase {
 		}
 	}
 
+	/**
+	 * true:
+	 * 1 4 0 2 2 3 1 118 97 108 117 -27 2 4 3 3 2 6 3 3
+	 * false:
+	 * 4 0 2 2 3 118 97 108 117 -27 2 4 3 118 97 108 117 -27 2 6 3 118 97 108 117 -27
+	 * */
+	@Test
+	public void testReference(){
+		String str = "value";
+		Map<Integer, String> item = new TreeMap<>();
+		item.put(1, str);//id=1,存入时1+2
+		item.put(2, str);
+		item.put(3, str);
+
+		Kryo kryo = new Kryo();
+		//kryo.setReferences(true);
+		kryo.setRegistrationRequired(false);
+
+		Output output = new Output(512, -1);
+		kryo.writeObject(output, item);
+
+		System.out.println(output.toBytes().length);
+		for(byte i : output.toBytes()){
+			System.out.print(i + " ");
+		}
+		System.out.println();
+	}
+
+	/**
+	 * 1 4 1 1 97 115 115 98 97 99 107 119 97 114 100 -13 3 1 107 101 -7 3 1 118 97 108 117 -27 3 1 115 101 108 -26
+	 * 1 0 99 111 109 46 101 115 111 116 101 114 105 99 115 111 102 116 119 97 114 101 46 107 114 121 111 46 82 101 102 101 114 101 110 99 101 84 101 115 116 36 83 116 117 102 -26
+	 * 2 3
+	 * 1 115 111 109 101 116 104 105 110 -25 2 -112 7
+	 *
+	 * false
+	 * java.lang.StackOverflowError
+	 * */
 	@Test
 	public void testChildObjectBeforeReference () {
 		Ordering ordering = new Ordering();
@@ -53,7 +87,7 @@ public class ReferenceTest extends KryoTestCase {
 		Stuff stuff = new Stuff(ordering);
 		stuff.put("key", "value");
 		stuff.put("something", 456);
-		stuff.put("self", stuff);
+		stuff.put("self", stuff); //再次写入stuff时会直接写入一个id而非不停的去循环写入数据直到栈溢出
 
 		Kryo kryo = new Kryo();
 		kryo.setRegistrationRequired(false);
@@ -71,6 +105,12 @@ public class ReferenceTest extends KryoTestCase {
 
 		Output output = new Output(512, -1);
 		kryo.writeObject(output, stuff);
+
+		System.out.println(output.toBytes().length);
+		for(byte i : output.toBytes()){
+			System.out.print(i + " ");
+		}
+		System.out.println();
 
 		Input input = new Input(output.getBuffer(), 0, output.position());
 		Stuff stuff2 = kryo.readObject(input, Stuff.class);

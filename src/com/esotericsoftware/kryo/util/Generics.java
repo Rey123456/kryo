@@ -182,7 +182,7 @@ public class Generics {
 	static public class GenericsHierarchy {
 		final int total;
 		final int[] counts;
-		final TypeVariable[] parameters;
+		final TypeVariable[] parameters; //TypeVariable 是各种类型变量的公共高级接口
 
 		public GenericsHierarchy (Class type) {
 			IntArray counts = new IntArray();

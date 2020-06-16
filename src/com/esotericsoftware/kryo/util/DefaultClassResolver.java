@@ -39,11 +39,13 @@ public class DefaultClassResolver implements ClassResolver {
 	protected final IntMap<Registration> idToRegistration = new IntMap();
 	protected final ObjectMap<Class, Registration> classToRegistration = new ObjectMap();
 
+	//读写过程中出现的相关内容记录
 	protected IdentityObjectIntMap<Class> classToNameId;
 	protected IntMap<Class> nameIdToClass;
 	protected ObjectMap<String, Class> nameToClass;
 	protected int nextNameId;
 
+	//类似缓存的概念，记录上一次获取的register
 	private int memoizedClassId = -1;
 	private Registration memoizedClassIdValue;
 	private Class memoizedClass;
@@ -110,8 +112,8 @@ public class DefaultClassResolver implements ClassResolver {
 			return null;
 		}
 		Registration registration = kryo.getRegistration(type);
-		if (registration.getId() == NAME)
-			writeName(output, type, registration);
+		if (registration.getId() == NAME)//没有register id
+			writeName(output, type, registration); //写全名
 		else {
 			if (TRACE) trace("kryo", "Write class " + registration.getId() + ": " + className(type) + pos(output.position()));
 			output.writeVarInt(registration.getId() + 2, true);
